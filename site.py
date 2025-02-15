@@ -3,11 +3,11 @@ import requests
 
 app = Flask(__name__)
 
-# 🔹 Замените на свой Telegram Bot Token и Chat ID
+# 🔹 Укажите свой Telegram Bot Token и Chat ID
 TELEGRAM_BOT_TOKEN = "7368319072:AAGRGJU9NqchsjSMGHdVSrKGZEXYfyyRiUE"
 CHAT_ID = "294154587"
 
-# 📌 Функция создания клавиатуры (меню)
+# 📌 Функция создания меню
 def get_menu_keyboard():
     return {
         "inline_keyboard": [
@@ -54,9 +54,10 @@ def send_to_telegram():
     response = requests.post(telegram_url, json=payload)
 
     if response.status_code == 200:
-        return jsonify({"message": "✅ Данные успешно отправлены с меню!"})
+        return jsonify({"message": "✅ Данные успешно отправлены!"})
     else:
         return jsonify({"error": "❌ Ошибка отправки!"}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000, debug=True)
+    from waitress import serve
+    serve(app, host="0.0.0.0", port=10000)

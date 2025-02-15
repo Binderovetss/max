@@ -36,14 +36,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # 📌 Запуск бота
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
-
-    # 🔹 Обработчик команды /start
     app.add_handler(CommandHandler("start", start))
-    
-    # 🔹 Обработчик нажатий кнопок
     app.add_handler(CallbackQueryHandler(button_handler))
 
-    # Запуск бота
     print("✅ Бот запущен!")
     app.run_polling()
 
