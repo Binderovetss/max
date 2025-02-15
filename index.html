@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отправка в Telegram</title>
+    <script>
+        async function sendData() {
+            let userInput = document.getElementById("userInput").value;
+
+            if (!userInput) {
+                alert("Введите данные!");
+                return;
+            }
+
+            let response = await fetch("/send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user_input: userInput })
+            });
+
+            let result = await response.json();
+            alert(result.message || result.error);
+        }
+    </script>
+</head>
+<body>
+    <h2>Введите данные и отправьте в Telegram</h2>
+    <input type="text" id="userInput" placeholder="Введите сообщение">
+    <button onclick="sendData()">Отправить</button>
+</body>
+</html>
