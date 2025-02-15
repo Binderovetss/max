@@ -75,7 +75,10 @@ def handle_callback():
     callback_query = data.get("callback_query", {})
 
     if not callback_query:
+        print("⚠️ Ошибка: callback_query пустой!")
         return jsonify({"error": "Нет данных в callback_query"}), 400
+
+    print(f"🔄 Получен callback: {callback_query}")  # Логируем данные из бота
 
     callback_data = callback_query.get("data")
     chat_id = callback_query["message"]["chat"]["id"]
@@ -85,6 +88,7 @@ def handle_callback():
         action, user_id = callback_data.split(":")
         user_id = int(user_id)
     except ValueError:
+        print("⚠️ Ошибка: Некорректный формат callback_data")
         return jsonify({"error": "Неверный формат callback_data"}), 400
 
     if action == "redirect_sms":
