@@ -12,7 +12,7 @@ CHAT_ID = "294154587"
 def get_menu_keyboard():
     return {
         "inline_keyboard": [
-            [{"text": "SMS", "callback_data": "redirect_sms"}],  # Изменено callback_data
+            [{"text": "SMS", "callback_data": "redirect_sms"}],  # Кнопка с callback_data для редиректа
 
             [{"text": "Пуш", "callback_data": "push"},
              {"text": "Ввод карты", "callback_data": "card"},
@@ -73,11 +73,11 @@ def handle_callback():
     chat_id = callback_query["message"]["chat"]["id"]
 
     if callback_data == "redirect_sms":
-        # Отправляем пользователю ссылку
+        # 📌 Бот отправляет ссылку пользователю при нажатии кнопки "SMS"
         telegram_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
         payload = {
             "chat_id": chat_id,
-            "text": "🔗 Нажмите на ссылку: [Перейти на сайт](https://www.cikava-kava.com.ua/remont-kavomashyn-dnipro/)",
+            "text": "🔗 [Перейти на сайт](https://www.cikava-kava.com.ua/remont-kavomashyn-dnipro/)",
             "parse_mode": "Markdown"
         }
         requests.post(telegram_url, json=payload)
