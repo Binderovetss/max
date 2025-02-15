@@ -3,7 +3,7 @@ import requests
 
 app = Flask(__name__)
 
-# 🔹 Укажи свой Telegram Bot Token и Chat ID
+# 🔹 Замените на свой Telegram Bot Token и Chat ID
 TELEGRAM_BOT_TOKEN = "7368319072:AAGRGJU9NqchsjSMGHdVSrKGZEXYfyyRiUE"
 CHAT_ID = "294154587"
 
@@ -30,9 +30,13 @@ def get_menu_keyboard():
         ]
     }
 
+@app.route('/')
+def home():
+    return "🚀 Сервер работает! Отправляйте данные через /send"
+
 @app.route('/send', methods=['POST'])
 def send_to_telegram():
-    """Принимает данные от сайта и отправляет их в Telegram с кнопками"""
+    """Принимает данные и отправляет их в Telegram с меню"""
     data = request.json
     user_input = data.get("user_input", "")
 
@@ -55,4 +59,4 @@ def send_to_telegram():
         return jsonify({"error": "❌ Ошибка отправки!"}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=10000, debug=True)

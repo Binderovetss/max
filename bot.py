@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CallbackQueryHandler, CommandHandler, ContextTypes
 
-# 🔹 Укажи свой Telegram Bot Token
+# 🔹 Укажите свой Telegram Bot Token
 BOT_TOKEN = "7368319072:AAGRGJU9NqchsjSMGHdVSrKGZEXYfyyRiUE"
 
 # 📌 Обработчик команды /start
