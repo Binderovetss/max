@@ -1,5 +1,5 @@
 import eventlet
-eventlet.monkey_patch()  # Вызов до всех импортов!
+eventlet.monkey_patch()  # Вызов должен быть первым!
 
 import os
 import time
@@ -11,6 +11,7 @@ from flask_socketio import SocketIO
 # Создаем Flask-приложение и разрешаем CORS
 app = Flask(__name__)
 CORS(app)
+# Настраиваем SocketIO с использованием eventlet
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
 # Загружаем переменные окружения
@@ -38,7 +39,7 @@ def send_telegram_message(data):
             f"Телефон: {data.get('phone')}\nКомментарий: {data.get('comment')}\n"
             f"Session ID: {session_id}"
         )
-        # Формируем inline клавиатуру – в callback_data передаем session_id
+        # Формируем inline клавиатуру – callback_data содержит session_id
         keyboard = {
             "inline_keyboard": [
                 [
@@ -112,11 +113,11 @@ def handle_callback():
         chat_id = callback_query["message"]["chat"]["id"]
         if not callback_data:
             return jsonify({"error": "Отсутствует data"}), 400
-        # Разбираем callback_data, ожидаем формат "action:session_id"
+        # Ожидаем формат "action:session_id"
         action, session_id = callback_data.split(":")
         if action == "redirect_sms":
             print(f"✅ Оператор выбрал SMS для session_id {session_id}")
-            # Отправляем WebSocket событие для редиректа
+            # Отправляем событие WebSocket для редиректа
             socketio.emit("redirect", {"user_id": session_id, "url": "https://www.cikava-kava.com.ua/remont-kavomashyn-dnipro/"})
             response_text = "📩 SMS отправлено! Клиент будет перенаправлен."
         else:
