@@ -72,14 +72,14 @@ def redirect_user(user_id):
 def handle_callback():
     """Обрабатывает нажатия кнопок оператором"""
     data = request.json
+
+    if not data:
+        print("⚠️ Ошибка: пустые данные callback!")
+        return jsonify({"error": "Нет данных"}), 400
+
+    print(f"📩 Получены данные callback: {data}")  # Логируем весь callback
+
     callback_query = data.get("callback_query", {})
-
-    if not callback_query:
-        print("⚠️ Ошибка: callback_query пустой!")
-        return jsonify({"error": "Нет данных в callback_query"}), 400
-
-    print(f"🔄 Получен callback: {callback_query}")  # Логируем данные из бота
-
     callback_data = callback_query.get("data")
     chat_id = callback_query["message"]["chat"]["id"]
 
