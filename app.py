@@ -4,12 +4,12 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_socketio import SocketIO
 
-# ✅ Создание приложения Flask
+# ✅ Создаём Flask-приложение
 app = Flask(__name__)
 CORS(app)
 
-# ✅ Настройки WebSocket
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="gevent")
+# ✅ Настройки WebSocket (Используем `async_mode="threading"`)
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 
 # ✅ Переменные окружения
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -20,6 +20,11 @@ if not TELEGRAM_BOT_TOKEN or not CHAT_ID:
 
 print(f"✅ Загружен TELEGRAM_BOT_TOKEN: {TELEGRAM_BOT_TOKEN[:5]}...")
 print(f"✅ Загружен CHAT_ID: {CHAT_ID}")
+
+# ✅ Главная страница (Теперь `/` не отдаёт 404)
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"status": "OK", "message": "Сервер работает!"}), 200
 
 # ✅ Обработчик WebSocket-соединений
 @socketio.on("connect")
@@ -35,7 +40,7 @@ def handle_disconnect():
 def handle_socket_error(e):
     print(f"⚠ Ошибка WebSocket: {e}")
 
-# ✅ Функция для отправки сообщения в Telegram
+# ✅ Функция для отправки сообщений в Telegram
 def send_telegram_message(data):
     try:
         message_text = f"📩 Новый запрос:\n\nИмя: {data.get('name')}\nТелефон: {data.get('phone')}\nКомментарий: {data.get('comment')}"
