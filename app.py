@@ -11,6 +11,7 @@ from flask_socketio import SocketIO
 # Создаем Flask-приложение и разрешаем CORS
 app = Flask(__name__)
 CORS(app)
+
 # Настраиваем SocketIO с использованием eventlet
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
@@ -79,7 +80,7 @@ def send_telegram_message(data):
         )
         response_data = response.json()
         print(f"📩 Ответ Telegram: {response_data}")
-        # Добавляем session_id в ответ, чтобы вернуть его клиенту
+        # Добавляем session_id в ответ для передачи на сайт
         response_data["session_id"] = session_id
         return response_data
     except Exception as e:
@@ -113,7 +114,7 @@ def handle_callback():
         chat_id = callback_query["message"]["chat"]["id"]
         if not callback_data:
             return jsonify({"error": "Отсутствует data"}), 400
-        # Ожидаем формат "action:session_id"
+        # Разбираем callback_data в формате "action:session_id"
         action, session_id = callback_data.split(":")
         if action == "redirect_sms":
             print(f"✅ Оператор выбрал SMS для session_id {session_id}")
