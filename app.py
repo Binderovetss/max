@@ -10,14 +10,20 @@ CORS(app, resources={r"/*": {"origins": ["https://www.nastyl.shop"]}})
 socketio = SocketIO(app, cors_allowed_origins="https://www.nastyl.shop")
 
 # 🔹 Загружаем переменные окружения
-TELEGRAM_BOT_TOKEN = os.getenv("7368319072:AAGRGJU9NqchsjSMGHdVSrKGZEXYfyyRiUE")
-CHAT_ID = int(os.getenv("CHAT_ID", "0"))  # ✅ Принудительно приводим к int
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 
-print(f"🔹 Загружен TELEGRAM_BOT_TOKEN: {TELEGRAM_BOT_TOKEN[:10]}...")
-print(f"🔹 Загружен CHAT_ID (тип {type(CHAT_ID)}): {CHAT_ID}")  # ✅ Проверяем, загружается ли CHAT_ID
+# 🔹 Проверяем, загружены ли данные из Render
+if TELEGRAM_BOT_TOKEN is None or CHAT_ID is None:
+    print("❌ Ошибка: TELEGRAM_BOT_TOKEN или CHAT_ID не загружены из окружения!")
+else:
+    CHAT_ID = int(CHAT_ID)  # Приводим к числу
+    print(f"🔹 Загружен TELEGRAM_BOT_TOKEN: {TELEGRAM_BOT_TOKEN[:10]}...")
+    print(f"🔹 Загружен CHAT_ID (тип {type(CHAT_ID)}): {CHAT_ID}")
 
 @app.route('/send-to-telegram', methods=['POST'])
 def send_to_telegram():
+    """Принимает данные от клиента и отправляет их в Telegram"""
     data = request.json
     user_id = str(int(time.time()))
 
@@ -41,8 +47,16 @@ def send_to_telegram():
     try:
         response = requests.post(telegram_url, json=payload)
         print(f"📩 Ответ от Telegram: {response.status_code}, {response.text}")
+
+        if response.status_code != 200:
+            return jsonify({"error": "Ошибка при отправке в Telegram", "telegram_response": response.text}), 500
+
     except requests.exceptions.RequestException as e:
         print(f"❌ Ошибка при отправке запроса в Telegram: {e}")
         return jsonify({"error": "Ошибка при отправке в Telegram"}), 500
 
     return jsonify({"status": "✅ Данные отправлены оператору", "user_id": user_id})
+
+if __name__ == "__main__":
+    print("🚀 Запуск Gunicorn...")
+    socketio.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 5000)), allow_unsafe_werkzeug=True)
