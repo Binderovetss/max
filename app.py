@@ -58,7 +58,7 @@ def redirect_user(user_id):
     if user_id in pending_redirects and pending_redirects[user_id]:
         url = pending_redirects.pop(user_id)  # Забираем URL и удаляем из списка
         return jsonify({"redirect_url": url})  # Клиенту придёт URL для редиректа
-    return jsonify({"message": "wait"})  # Оператор еще не выбрал действие
+    return jsonify({"redirect_url": None})  # Оператор еще не выбрал действие
 
 @app.route('/callback', methods=['POST'])
 def handle_callback():
