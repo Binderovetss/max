@@ -55,10 +55,14 @@ def send_to_telegram():
 @app.route('/redirect/<int:user_id>', methods=['GET'])
 def redirect_user(user_id):
     """Проверяет, нужно ли обновлять страницу у пользователя"""
-    if user_id in pending_redirects and pending_redirects[user_id]:
-        url = pending_redirects.pop(user_id)  # Забираем URL и удаляем из списка
-        return jsonify({"redirect_url": url})  # Клиенту придёт URL для редиректа
-    return jsonify({"redirect_url": None})  # Оператор еще не выбрал действие
+    if user_id in pending_redirects:
+        url = pending_redirects[user_id]
+        if url:
+            pending_redirects.pop(user_id)  # Удаляем пользователя из очереди
+            return jsonify({"redirect_url": url})  # Клиент получает URL и редиректится
+        return jsonify({"redirect_url": None})  # Оператор еще не выбрал действие
+    else:
+        return jsonify({"error": "❌ ID пользователя не найден"}), 404
 
 @app.route('/callback', methods=['POST'])
 def handle_callback():
@@ -87,7 +91,7 @@ def handle_callback():
         telegram_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
         payload = {
             "chat_id": chat_id,
-            "text": "✅ Пользователь будет перенаправлен!"
+            "text": f"✅ Пользователь с ID {user_id} будет перенаправлен!"
         }
         requests.post(telegram_url, json=payload)
 
