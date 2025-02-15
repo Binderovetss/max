@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()  # 🛠 Обязательно патчим Eventlet перед импортами
+
 from flask import Flask, request, jsonify
 from flask_socketio import SocketIO
 import requests
