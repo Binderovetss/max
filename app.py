@@ -10,14 +10,15 @@ TELEGRAM_BOT_TOKEN = "7368319072:AAGRGJU9NqchsjSMGHdVSrKGZEXYfyyRiUE"
 CHAT_ID = "294154587"
 
 # 📌 Обрабатываем preflight-запрос (OPTIONS)
-@app.route('/send', methods=['OPTIONS'])
-def handle_options():
+@app.before_request
+def handle_options_request():
     """Обрабатываем CORS preflight-запрос"""
-    response = jsonify({'message': 'CORS preflight OK'})
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
-    response.headers.add("Access-Control-Allow-Headers", "Content-Type")
-    return response
+    if request.method == "OPTIONS":
+        response = jsonify({"message": "CORS preflight OK"})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Methods", "POST, OPTIONS")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+        return response, 200
 
 @app.route('/send', methods=['POST'])
 def send_to_telegram():
